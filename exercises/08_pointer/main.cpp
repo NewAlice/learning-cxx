@@ -5,6 +5,17 @@ bool is_fibonacci(int *ptr, int len, int stride) {
     ASSERT(len >= 3, "`len` should be at least 3");
     // TODO: 编写代码判断从 ptr 开始，每 stride 个元素取 1 个元素，组成长度为 n 的数列是否满足
     // arr[i + 2] = arr[i] + arr[i + 1]
+    int cached = 1;
+    // std::cout << "len" << len << std::endl;
+    // TODO: 设置正确的循环条件
+    for (;cached + 1 <len;) {
+        // std::cout << (cached + 1) * stride << "value" << *(ptr + (cached + 1) * stride) << std::endl;
+        // std::cout << *(ptr + (cached - 1) * stride) << "  +   " << *(ptr + cached * stride) << std::endl;
+        if (*(ptr + (cached + 1) * stride) != (*(ptr + (cached - 1) * stride) + *(ptr + cached * stride))) {
+            return false;
+        }
+        cached++;
+    }
     return true;
 }
 

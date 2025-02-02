@@ -1,18 +1,17 @@
-#include "../exercise.h"
-#include<cstring>
+﻿#include "../exercise.h"
+#include <cstring>
 // READ: 类模板 <https://zh.cppreference.com/w/cpp/language/class_template>
 
 template<class T>
 struct Tensor4D {
     unsigned int shape[4];
     T *data;
-
-    Tensor4D(unsigned int const shape_[4], T const *data_) {
+    
+    Tensor4D(unsigned int shape_[4], T *data_){
         unsigned int size = 1;
         // TODO: 填入正确的 shape 并计算 size
-        for (int i=0; i<4; i++) {
-            shape[i] = shape_[i];
-            size *= shape[i];
+        for (int i = 0; i < 4; i++) {
+            size *= shape_[i];
         }
         data = new T[size];
         std::memcpy(data, data_, size * sizeof(T));
@@ -22,8 +21,8 @@ struct Tensor4D {
     }
 
     // 为了保持简单，禁止复制和移动
-    Tensor4D(Tensor4D const &) = delete;
-    Tensor4D(Tensor4D &&) noexcept = delete;
+    Tensor4D(Tensor4D const &others) = delete;
+    Tensor4D(Tensor4D &&)others noexcept = delete;
 
     // 这个加法需要支持“单向广播”。
     // 具体来说，`others` 可以具有与 `this` 不同的形状，形状不同的维度长度必须为 1。
@@ -32,37 +31,36 @@ struct Tensor4D {
     // 则 `this` 与 `others` 相加时，3 个形状为 `[1, 2, 1, 4]` 的子张量各自与 `others` 对应项相加。
     Tensor4D &operator+=(Tensor4D const &others) {
         // TODO: 实现单向广播的加法
-                for (int i = 0; i < 4; ++i) {
-            if (!(shape[i] == others.shape[i] || others.shape[i] == 1)) {
-                std::cerr << "Incompatible shapes for broadcasting." << std::endl;
-                return *this; // 这里可以抛出异常或其他错误处理
+        // 使用嵌套循环遍历所有元素并进行加法操作
+        // 假设使用行主序（Row-major order）
+        for(unsigned int i = 0; i < this->shape[0]; ++i){
+            for(unsigned int j = 0; j < this->shape[1]; ++j){
+                for(unsigned int k = 0; k < this->shape[2]; ++k){
+                    for(unsigned int l = 0; l < this->shape[3]; ++l){
+                        // 计算 `others` 中对应的索引
+                        unsigned int o_i = (others.shape[0] == 1) ? 0 : i;
+                        unsigned int o_j = (others.shape[1] == 1) ? 0 : j;
+                        unsigned int o_k = (others.shape[2] == 1) ? 0 : k;
+                        unsigned int o_l = (others.shape[3] == 1) ? 0 : l;
+
+                        // 计算线性索引
+                        unsigned int idx_this = i * this->shape[1] * this->shape[2] * this->shape[3] + 
+                                                j * this->shape[2] * this->shape[3] + 
+                                                k * this->shape[3] + 
+                                                l;
+
+                        unsigned int idx_others = o_i * others.shape[1] * others.shape[2] * others.shape[3] + 
+                                                   o_j * others.shape[2] * others.shape[3] + 
+                                                   o_k * others.shape[3] + 
+                                                   o_l;
+
+                        // 进行加法操作
+                        this->data[idx_this] += others.data[idx_others];
+                    }
+                }
             }
         }
 
-        // 计算广播后的形状
-        unsigned int broadcast_shape[4];
-        for (int i = 0; i < 4; ++i) {
-            broadcast_shape[i] = std::max(shape[i], others.shape[i]);
-        }
-
-        // 计算广播后的总大小
-        unsigned int broadcast_size = broadcast_shape[0] * broadcast_shape[1] * broadcast_shape[2] * broadcast_shape[3];
-
-        // 进行加法运算
-        for (unsigned int i = 0; i < broadcast_size; ++i) {
-            // 计算 `this` 和 `others` 中的索引
-            unsigned int this_idx = i;
-            unsigned int others_idx = i;
-            unsigned int factor = 1;
-            for (int j = 3; j >= 0; --j) {
-                unsigned int stride_this = (shape[j] == 1) ? 0 : factor;
-                unsigned int stride_others = (others.shape[j] == 1) ? 0 : factor;
-                this_idx = (this_idx / factor) % broadcast_shape[j] * stride_this + (this_idx % factor);
-                others_idx = (others_idx / factor) % broadcast_shape[j] * stride_others + (others_idx % factor);
-                factor *= broadcast_shape[j];
-            }
-            data[this_idx] += others.data[others_idx];
-        }
         return *this;
     }
 };
@@ -84,8 +82,8 @@ int main(int argc, char **argv) {
         auto t0 = Tensor4D(shape, data);
         auto t1 = Tensor4D(shape, data);
         t0 += t1;
-        for (auto i = 0u; i < sizeof(data) / sizeof(int); ++i) {
-            ASSERT(t0.data[i] == t0.data[i], "Tensor doubled by plus its self.");
+        for (auto i = 0u; i < sizeof(data) / sizeof(*data); ++i) {
+            ASSERT(t0.data[i] == data[i] * 2, "Tensor doubled by plus its self.");
         }
     }
     {
@@ -115,8 +113,8 @@ int main(int argc, char **argv) {
         auto t0 = Tensor4D(s0, d0);
         auto t1 = Tensor4D(s1, d1);
         t0 += t1;
-        for (auto i = 0u; i < sizeof(d0) / sizeof(int); ++i) {
-            ASSERT(t0.data[i] == t0.data[i], "Every element of t0 should be 7 after adding t1 to it.");
+        for (auto i = 0u; i < sizeof(d0) / sizeof(*d0); ++i) {
+            ASSERT(t0.data[i] == 7.f, "Every element of t0 should be 7 after adding t1 to it.");
         }
     }
     {
@@ -137,8 +135,8 @@ int main(int argc, char **argv) {
         auto t0 = Tensor4D(s0, d0);
         auto t1 = Tensor4D(s1, d1);
         t0 += t1;
-        for (auto i = 0u; i < sizeof(d0) / sizeof(double); ++i) {
-            ASSERT(t0.data[i] == t0.data[i], "Every element of t0 should be incremented by 1 after adding t1 to it.");
+        for (auto i = 0u; i < sizeof(d0) / sizeof(*d0); ++i) {
+            ASSERT(t0.data[i] == d0[i] + 1, "Every element of t0 should be incremented by 1 after adding t1 to it.");
         }
     }
 }

@@ -7,11 +7,13 @@
 template<class k, class v>
 bool key_exists(std::map<k, v> const &map, k const &key) {
     // TODO: 实现函数
+    return map.count(key) > 0;
 }
 
 template<class k, class v>
 void set(std::map<k, v> &map, k key, v value) {
     // TODO: 实现函数
+    map[key] = value;
 }
 
 // ---- 不要修改以下代码 ----
@@ -31,6 +33,7 @@ int main(int argc, char **argv) {
     ASSERT(secrets["Infini"] == "Tensor", "Infini -> Tensor");
 
     set(secrets, "hello"s, "developer"s);
+    std::cout<< "secrets " << secrets["hello"] << std::endl;
     ASSERT(secrets["hello"] == "developer", "hello -> developer");
 
     return 0;

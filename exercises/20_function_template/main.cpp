@@ -2,7 +2,17 @@
 
 // READ: 函数模板 <https://zh.cppreference.com/w/cpp/language/function_template>
 // TODO: 将这个函数模板化
-int plus(int a, int b) {
+// 模板化的浮点数比较函数
+template <typename T>
+// bool isEqual(T a, T b, T tolerance = std::numeric_limits<T>::epsilon()) {
+//     return std::abs(a - b) < tolerance;
+// }
+bool isEqual(T a, T b, T epsilon = static_cast<T>(1e-6)) {
+    return std::abs(a - b) < epsilon;
+}
+
+template<typename T>
+T plus(T a, T b) {
     return a + b;
 }
 
@@ -14,7 +24,8 @@ int main(int argc, char **argv) {
     ASSERT(plus(1.25f, 2.5f) == 3.75f, "Plus two float");
     ASSERT(plus(1.25, 2.5) == 3.75, "Plus two double");
     // TODO: 修改判断条件使测试通过
-    ASSERT(plus(0.1, 0.2) == 0.3, "How to make this pass?");
+    std::cout << "test  " << plus(0.1, 0.2)<< std::endl;
+    ASSERT(isEqual(plus(0.1, 0.2), 0.3), "How to make this pass?");
 
     return 0;
 }
