@@ -47,7 +47,6 @@ struct Tensor4D {
 
         // 计算广播后的总大小
         unsigned int broadcast_size = broadcast_shape[0] * broadcast_shape[1] * broadcast_shape[2] * broadcast_shape[3];
-
         // 进行加法运算
         for (unsigned int i = 0; i < broadcast_size; ++i) {
             // 计算 `this` 和 `others` 中的索引
